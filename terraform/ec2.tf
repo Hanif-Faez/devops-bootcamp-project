@@ -29,7 +29,7 @@ module "web_server" {
   version                = "~> 6.0"
   name                   = "web-server"
   ami                    = data.aws_ami.my_ami.id
-  instance_type          = "t3.micro"
+  instance_type          = "t3.medium"
   iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name // Attach the IAM instance profile for SSM access
   private_ip             = "10.0.0.5"                                        // Assign a specific private IP address to the web server
   subnet_id              = module.devops_vpc.public_subnets[0]               // Use the first public subnet
@@ -45,7 +45,7 @@ module "controller_node" {
   version                = "~> 6.0"
   name                   = "controller-node"
   ami                    = data.aws_ami.my_ami.id
-  instance_type          = "t3.micro"
+  instance_type          = "t3.small"
   iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name // Attach the IAM instance profile for SSM access
   private_ip             = "10.0.0.135"                                      // Assign a specific private IP address to the controller node
   subnet_id              = module.devops_vpc.private_subnets[0]              // Use the first private subnet from the VPC module
@@ -61,7 +61,7 @@ module "monitoring_node" {
   version                = "~> 6.0"
   name                   = "monitoring-node"
   ami                    = data.aws_ami.my_ami.id
-  instance_type          = "t3.micro"
+  instance_type          = "t3.small"
   iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name // Attach the IAM instance profile for SSM access
   private_ip             = "10.0.0.136"                                      // Assign a specific private IP address to the monitoring node
   subnet_id              = module.devops_vpc.private_subnets[0]              // Use the first private subnet from the VPC module
