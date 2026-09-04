@@ -52,8 +52,15 @@ module "controller_node" {
   create_security_group  = false                                             // Disable security group creation since we are using an existing one
   vpc_security_group_ids = [module.devops_private_sg.id]
   key_name               = "FedoraLab"
-  tags                   = { Name = "controller-node" }
-  root_block_device      = { size = 16 } // Increase root volume size to 16GB
+
+  user_data = templatefile("${path.module}/controller.sh.tftpl", {
+    inventory_content = templatefile("${path.module}/../ansible/inventory.ini.tftpl", {
+      web_server      = { private_ip = module.web_server.private_ip }
+      monitoring_node = { private_ip = module.monitoring_node.private_ip }
+    })
+  })
+  tags              = { Name = "controller-node" }
+  root_block_device = { size = 16 } // Increase root volume size to 16GB
 }
 
 module "monitoring_node" {

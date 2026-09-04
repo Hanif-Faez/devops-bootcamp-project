@@ -1,7 +1,3 @@
-data "http" "myip" {
-  url = "https://ifconfig.me/ip"
-}
-
 module "devops_public_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 6.0"
@@ -23,8 +19,8 @@ module "devops_public_sg" {
       from_port   = 9100
       to_port     = 9100
     }
-    ssh = {
-      cidr_ipv4   = "${chomp(data.http.myip.response_body)}/32"
+    ssh_controller = {
+      cidr_ipv4   = "10.0.0.135/32" // Allow access from the controller node's private IP address
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22
@@ -47,8 +43,8 @@ module "devops_private_sg" {
   vpc_id          = module.devops_vpc.vpc_id
 
   ingress_rules = {
-    ssh = {
-      cidr_ipv4   = "${chomp(data.http.myip.response_body)}/32"
+    ssh_controller = {
+      cidr_ipv4   = "10.0.0.135/32" // Allow access from the controller node's private IP address
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22

@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+exec > /var/log/controller-bootstrap.log 2>&1
+apt-get update
+apt-get install -y ansible git awscli
+# SSH key from SSM (SecureString) — no secret in state/repo
+aws ssm get-parameter --name /devops-project/ssh-PK \
+  --with-decryption --region ap-southeast-1 \
+  --query Parameter.Value --output text > /home/ubuntu/.ssh/id_ed25519
+chmod 600 /home/ubuntu/.ssh/id_ed25519 && chown ubuntu:ubuntu /home/ubuntu/.ssh/id_ed25519
+# repo + inventory + roles
+git clone -b feature/ansible https://github.com/Hanif-Faez/devops-bootcamp-project.git /opt/devops-bootcamp
+cat > /opt/devops-bootcamp/ansible/inventory.ini <<'EOF'
+${inventory_content}
+EOF
+chown -R ubuntu:ubuntu /opt/devops-bootcamp /home/ubuntu/.ssh
+sudo -u ubuntu ansible-galaxy install -r /opt/devops-bootcamp/ansible/requirement.yml
