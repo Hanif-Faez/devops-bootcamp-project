@@ -1,0 +1,8 @@
+- name: Install Docker via geerlingguy.docker
+  hosts: web
+  become: true
+  roles:
+    - role: geerlingguy.docker
+      vars:
+        docker_install_compose_plugin: true
+        docker_users: [ubuntu]
