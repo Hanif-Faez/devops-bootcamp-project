@@ -28,7 +28,10 @@ for i in $(seq 1 5); do
   sleep 15
 done
 [ "$apt_ok" -eq 1 ] || { echo "[bootstrap] ERROR: apt-get update failed after retries."; exit 1; }
-apt-get install -y ansible git awscli
+apt-get install -y ansible git curl unzip ca-certificates
+curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp/awscli-install
+/tmp/awscli-install/aws/install      # → /usr/local/bin/aws (CLI v2)
 # SSH key from SSM (SecureString) — no secret in state/repo
 aws ssm get-parameter --name /devops-project/ssh-PK \
   --with-decryption --region ap-southeast-1 \
