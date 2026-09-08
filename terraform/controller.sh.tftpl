@@ -1,7 +1,33 @@
 #!/bin/bash
 set -euo pipefail
 exec > /var/log/controller-bootstrap.log 2>&1
-apt-get update
+echo "[bootstrap] Waiting for outbound internet..."
+ready=0
+for i in $(seq 1 60); do   # up to 10 minutes
+  if getent hosts archive.ubuntu.com >/dev/null 2>&1 \
+     && (echo >/dev/tcp/archive.ubuntu.com/443) 2>/dev/null; then
+    ready=1
+    echo "[bootstrap] Internet connection verified."
+    break
+  fi
+  echo "[bootstrap] No connectivity yet (attempt $i/60)..."
+  sleep 10
+done
+if [ "$ready" -ne 1 ]; then
+  echo "[bootstrap] ERROR: no outbound internet after 10 minutes. Aborting."
+  exit 1
+fi
+# Verify packages can actually be fetched (retry apt update)
+apt_ok=0
+for i in $(seq 1 5); do
+  echo "[bootstrap] apt-get update (attempt $i/5)..."
+  if apt-get update; then
+    apt_ok=1
+    break
+  fi
+  sleep 15
+done
+[ "$apt_ok" -eq 1 ] || { echo "[bootstrap] ERROR: apt-get update failed after retries."; exit 1; }
 apt-get install -y ansible git awscli
 # SSH key from SSM (SecureString) — no secret in state/repo
 aws ssm get-parameter --name /devops-project/ssh-PK \
