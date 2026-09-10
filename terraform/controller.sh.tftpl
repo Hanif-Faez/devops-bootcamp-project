@@ -38,7 +38,7 @@ aws ssm get-parameter --name /devops-project/ssh-PK \
   --query Parameter.Value --output text > /home/ubuntu/.ssh/id_ed25519
 chmod 600 /home/ubuntu/.ssh/id_ed25519 && chown ubuntu:ubuntu /home/ubuntu/.ssh/id_ed25519
 # repo + inventory + roles
-git clone -b feature/ansible https://github.com/Hanif-Faez/devops-bootcamp-project.git /opt/devops-bootcamp
+git clone -b main https://github.com/Hanif-Faez/devops-bootcamp-project.git /opt/devops-bootcamp
 cat > /opt/devops-bootcamp/ansible/inventory.ini <<'EOF'
 ${inventory_content}
 EOF

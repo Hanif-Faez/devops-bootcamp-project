@@ -44,4 +44,5 @@ terraform.rc
 # planout
 
 ansible/inventory.ini
+ansible/.env
 *.pem

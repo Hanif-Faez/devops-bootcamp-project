@@ -18,3 +18,24 @@ resource "aws_iam_role_policy" "controller_ssh_key" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "web_ecr_pull" {
+  name = "web-ecr-pull"
+  role = data.aws_iam_instance_profile.my_ssm_profile.role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer"]
+        Resource = "arn:aws:ecr:ap-southeast-1:${data.aws_caller_identity.my_account.account_id}:repository/devops-bootcamp/final-project-hanif-faez"
+      }
+    ]
+  })
+}
