@@ -1,0 +1,99 @@
+- name: Deploy Immich on web node
+  hosts: web
+  become: true
+  vars:
+    ecr_uri: "018602188273.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/final-project-hanif-faez"
+    immich_image_tag: "latest"
+    immich_dir: /opt/immich
+    tz: "Asia/Singapore"
+
+  tasks:
+    - name: Install aws CLI v2 (for ECR authentication)
+      block:
+        - name: Install aws cli dependencies
+          ansible.builtin.apt:
+            name: [curl, unzip, ca-certificates]
+            state: present
+            update_cache: true
+
+        - name: Download aws cli v2
+          ansible.builtin.get_url:
+            url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+            dest: /tmp/awscliv2.zip
+            mode: "0644"
+
+        - name: Unzip aws cli
+          ansible.builtin.unarchive:
+            src: /tmp/awscliv2.zip
+            dest: /tmp/awscli-install
+            remote_src: true
+
+        - name: Install aws cli
+          ansible.builtin.command: /tmp/awscli-install/aws/install
+          args:
+            creates: /usr/local/bin/aws
+
+    - name: Generate persistent Immich secrets (stored on controller)
+      ansible.builtin.set_fact:
+        db_password: "{{ lookup('password', '/opt/devops-bootcamp/ansible/.immich_db_pw chars=ascii_letters,digits length=24') }}"
+        jwt_secret: "{{ lookup('password', '/opt/devops-bootcamp/ansible/.immich_jwt chars=hexdigits length=64') }}"
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Create immich directory
+      ansible.builtin.file:
+        path: "{{ immich_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Authenticate to ECR
+      ansible.builtin.shell: >
+        aws ecr get-login-password --region ap-southeast-1
+        | docker login --username AWS --password-stdin "{{ ecr_uri }}"
+      changed_when: false
+
+    - name: Copy Immich compose file
+      ansible.builtin.template:
+        src: immich-compose.yml.j2
+        dest: "{{ immich_dir }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Copy Immich .env
+      ansible.builtin.template:
+        src: immich.env.j2
+        dest: "{{ immich_dir }}/.env"
+        mode: "0600"
+
+    - name: Start Immich stack
+      ansible.builtin.command: docker compose up -d
+      args:
+        chdir: "{{ immich_dir }}"
+
+    - name: Copy nginx reverse proxy config
+      ansible.builtin.template:
+        src: nginx-immich.conf.j2
+        dest: /etc/nginx/sites-available/immich
+        mode: "0644"
+      notify: Reload nginx
+
+    - name: Disable default nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload nginx
+
+    - name: Enable immich site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/immich
+        dest: /etc/nginx/sites-enabled/immich
+        state: link
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

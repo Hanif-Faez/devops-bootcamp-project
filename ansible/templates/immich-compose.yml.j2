@@ -1,0 +1,42 @@
+services:
+  immich-server:
+    image: "{{ ecr_uri }}:{{ immich_image_tag }}"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:2283:2283"
+    volumes:
+      - immich-upload:/usr/src/app/upload
+      - immich-library:/usr/src/app/library
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "{{ db_password }}"
+      POSTGRES_DB: immich
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d immich"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+volumes:
+  immich-upload:
+  immich-library:
+  postgres-data:
+  redis-data:
