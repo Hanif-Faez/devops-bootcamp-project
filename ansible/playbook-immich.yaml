@@ -22,11 +22,18 @@
             dest: /tmp/awscliv2.zip
             mode: "0644"
 
+        - name: Create aws cli install directory
+          ansible.builtin.file:
+            path: /tmp/awscli-install
+            state: directory
+            mode: "0755"
+
         - name: Unzip aws cli
           ansible.builtin.unarchive:
             src: /tmp/awscliv2.zip
             dest: /tmp/awscli-install
             remote_src: true
+            creates: /tmp/awscli-install/aws/install
 
         - name: Install aws cli
           ansible.builtin.command: /tmp/awscli-install/aws/install
@@ -50,9 +57,12 @@
         mode: "0755"
 
     - name: Authenticate to ECR
-      ansible.builtin.shell: >
-        aws ecr get-login-password --region ap-southeast-1
-        | docker login --username AWS --password-stdin "{{ ecr_uri }}"
+      ansible.builtin.shell: |
+        set -o pipefail
+        aws ecr get-login-password --region ap-southeast-1 \
+          | docker login --username AWS --password-stdin "{{ ecr_uri }}"
+      args:
+        executable: /bin/bash
       changed_when: false
 
     - name: Copy Immich compose file
@@ -71,6 +81,11 @@
       ansible.builtin.command: docker compose up -d
       args:
         chdir: "{{ immich_dir }}"
+      register: immich_compose
+      changed_when: >-
+        'Started' in immich_compose.stdout
+        or 'Created' in immich_compose.stdout
+        or 'Recreated' in immich_compose.stdout
 
     - name: Copy nginx reverse proxy config
       ansible.builtin.template:
