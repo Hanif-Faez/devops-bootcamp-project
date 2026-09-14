@@ -43,6 +43,10 @@ terraform.rc
 # Uncomment the line below if you want to ignore planout files.
 # planout
 
+.ansible/
 ansible/inventory.ini
 ansible/.env
+ansible/.immich_*
+/grafana/
+/prometheus/
 *.pem

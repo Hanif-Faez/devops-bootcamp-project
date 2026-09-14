@@ -1,0 +1,74 @@
+- name: Starting monitoring stack
+  hosts: monitoring
+  become: true
+  vars:
+    docker_users: [ubuntu]
+  roles:
+    - geerlingguy.docker
+  tasks:
+    - name: Fetching Cloudflare tunnel token from SSM
+      ansible.builtin.shell: >
+        aws ssm get-parameter --name /devops-project/CF-tunnel
+        --with-decryption --region ap-southeast-1 --query Parameter.Value --output text
+      delegate_to: localhost
+      become: false
+      register: tunnel_token
+      no_log: true
+      changed_when: false
+
+    - name: Fetching Grafana admin password from SSM
+      ansible.builtin.shell: >
+        aws ssm get-parameter --name /devops-project/grafana-cred
+        --with-decryption --region ap-southeast-1 --query Parameter.Value --output text
+      delegate_to: localhost
+      become: false
+      register: grafana_admin_pw
+      no_log: true
+      changed_when: false
+
+    - name: Creating monitoring stack folder
+      ansible.builtin.file:
+        path: /opt/monitoring
+        state: directory
+        mode: '755'
+
+    - name: Creating Grafana provisioning folder
+      ansible.builtin.file:
+        path: /opt/monitoring/grafana-provisioning/datasources
+        state: directory
+        mode: '755'
+
+    - name: Copying prometheus.yaml
+      ansible.builtin.copy:
+        src: prometheus.yaml
+        dest: /opt/monitoring/prometheus.yaml
+        mode: '644'
+
+    - name: Copying compose.yaml
+      ansible.builtin.copy:
+        src: compose.yaml
+        dest: /opt/monitoring/compose.yaml
+        mode: '644'
+
+    - name: Templating monitoring environment file
+      ansible.builtin.template:
+        src: monitoring.env.j2
+        dest: /opt/monitoring/.env
+        mode: '600'
+      no_log: true
+
+    - name: Templating Grafana datasource provisioning
+      ansible.builtin.template:
+        src: grafana-datasource.yml.j2
+        dest: /opt/monitoring/grafana-provisioning/datasources/prometheus.yml
+        mode: '644'
+
+    - name: Starting containers
+      ansible.builtin.command: docker compose up -d
+      args:
+        chdir: /opt/monitoring
+      register: monitoring_compose
+      changed_when: >-
+        'Started' in monitoring_compose.stdout
+        or 'Created' in monitoring_compose.stdout
+        or 'Recreated' in monitoring_compose.stdout

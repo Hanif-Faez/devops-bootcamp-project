@@ -6,9 +6,13 @@ resource "aws_iam_role_policy" "controller_ssh_key" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["ssm:GetParameter"]
-        Resource = "arn:aws:ssm:ap-southeast-1:${data.aws_caller_identity.my_account.account_id}:parameter/devops-project/ssh-PK"
+        Effect = "Allow"
+        Action = ["ssm:GetParameter"]
+        Resource = [
+          "arn:aws:ssm:ap-southeast-1:${data.aws_caller_identity.my_account.account_id}:parameter/devops-project/ssh-PK",
+          "arn:aws:ssm:ap-southeast-1:${data.aws_caller_identity.my_account.account_id}:parameter/devops-project/CF-tunnel",
+          "arn:aws:ssm:ap-southeast-1:${data.aws_caller_identity.my_account.account_id}:parameter/devops-project/grafana-cred"
+        ]
       },
       {
         Effect   = "Allow"

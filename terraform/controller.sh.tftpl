@@ -37,10 +37,11 @@ aws ssm get-parameter --name /devops-project/ssh-PK \
   --with-decryption --region ap-southeast-1 \
   --query Parameter.Value --output text > /home/ubuntu/.ssh/id_ed25519
 chmod 600 /home/ubuntu/.ssh/id_ed25519 && chown ubuntu:ubuntu /home/ubuntu/.ssh/id_ed25519
-# repo + inventory + roles
+# repo + inventory + roles + collections
 git clone -b main https://github.com/Hanif-Faez/devops-bootcamp-project.git /opt/devops-bootcamp
 cat > /opt/devops-bootcamp/ansible/inventory.ini <<'EOF'
 ${inventory_content}
 EOF
 chown -R ubuntu:ubuntu /opt/devops-bootcamp /home/ubuntu/.ssh
 sudo -u ubuntu ansible-galaxy install -r /opt/devops-bootcamp/ansible/requirement.yml
+sudo -u ubuntu ansible-galaxy collection install -r /opt/devops-bootcamp/ansible/requirement.yml
