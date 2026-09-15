@@ -23,6 +23,13 @@ Requirement: `FedoraLab` key pair, S3 state bucket, and SSM params `/devops-proj
 ```bash
 cd terraform && terraform init && terraform apply
 ```
+## Screenshot
+
+<img width="1844" height="980" alt="grafana_dashboard" src="https://github.com/user-attachments/assets/67d85d8d-1f28-4196-a156-eb92f0b0e597" />
+
+
+<img width="1018" height="722" alt="immich" src="https://github.com/user-attachments/assets/6daf1297-99eb-4744-95a2-549b5219529e" />
+
 
 ## Configuration management
 
